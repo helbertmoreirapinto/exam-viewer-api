@@ -1,6 +1,7 @@
 import faker from 'faker'
 import { SignUpController } from '@/presentation/controllers/signup'
-import { serverError } from '@/presentation/helpers/http-helper'
+import { MissingParamError } from '@/presentation/errors'
+import { badRequest, serverError } from '@/presentation/helpers/http-helper'
 import { ValidatorSpy } from '@/tests/presentation/mocks'
 import { throwError } from '@/tests/domain/mocks'
 
@@ -42,6 +43,13 @@ describe('SignUp controller',() => {
       jest.spyOn(validatorSpy, 'validate').mockImplementationOnce(throwError)
       const httpResponse = await sut.handle(mockRequest())
       expect(httpResponse).toEqual(serverError(new Error()))
+    })
+
+    test('Should return 400 if validator fails', async () => {
+      const { sut, validatorSpy } = makeSut()
+      validatorSpy.error = new MissingParamError(faker.random.word())
+      const httpResponse = await sut.handle(mockRequest())
+      expect(httpResponse).toEqual(badRequest(validatorSpy.error))
     })
   })
 })
